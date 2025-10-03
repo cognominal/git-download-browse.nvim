@@ -58,6 +58,22 @@ local function ensure_repo_root()
 end
 
 function M.download_repo(arg)
+  if not arg or arg == "" then
+    local clipboard = vim.fn.getreg("+")
+    if clipboard == "" then
+      clipboard = vim.fn.getreg("*")
+    end
+    if clipboard and clipboard ~= "" then
+      local trim = vim.trim or vim.fn.trim
+      arg = trim(clipboard)
+    else
+      vim.notify("No repository provided and clipboard is empty", vim.log.levels.ERROR)
+      return
+    end
+  end
+
+  local trim = vim.trim or vim.fn.trim
+  arg = trim(arg)
   local user, repo, url = normalize_repo_arg(arg)
   if not user then
     vim.notify("Invalid repository. Use https://github.com/user/repo or user/repo", vim.log.levels.ERROR)
@@ -188,7 +204,7 @@ function M.setup(opts)
   vim.api.nvim_create_user_command("DownloadGitRepo", function(params)
     M.download_repo(params.args)
   end, {
-    nargs = 1,
+    nargs = "?",
     complete = function()
       return {}
     end,

@@ -6,6 +6,8 @@ local finders = require("telescope.finders")
 local previewers = require("telescope.previewers")
 local conf = require("telescope.config").values
 local utils = require("telescope.utils")
+local actions = require("telescope.actions")
+local action_state = require("telescope.actions.state")
 
 local config = {
   repo_root = vim.fn.expand("~/git"),
@@ -140,9 +142,24 @@ function M.open_picker(opts)
   pickers
     .new(opts, {
       prompt_title = "Git Repos",
-      finder = finders.new_table({ results = entries }),
+      finder = finders.new_table({
+        results = entries,
+        entry_maker = function(entry)
+          return entry
+        end,
+      }),
       sorter = conf.generic_sorter(opts),
       previewer = repo_previewer(),
+      attach_mappings = function(prompt_bufnr, _)
+        actions.select_default:replace(function()
+          actions.close(prompt_bufnr)
+          local selection = action_state.get_selected_entry()
+          if selection and selection.path then
+            vim.cmd("lcd " .. vim.fn.fnameescape(selection.path))
+          end
+        end)
+        return true
+      end,
     })
     :find()
 end

@@ -41,7 +41,9 @@ plugin file under `lua/plugins`). LazyVim will pick it up automatically.
 
 - `:DownloadGitRepo user/repo` or `:DownloadGitRepo https://github.com/user/repo`
   clones the repository (shallow) into `<repo_root>/user---repo`.
-- `:GitRepos` opens the Telescope picker listing downloaded repositories.
+- `:GitRepos` opens the Telescope picker listing downloaded repositories and
+  switches Neovim's local directory (`:lcd`) to the selected entry when you
+  confirm.
 - The default keymap `<leader>gv` opens the picker. Set `keymap = false` (or
   `nil`) in `setup()` to disable it.
 - Change `repo_root` in `setup()` to control where repositories are stored.

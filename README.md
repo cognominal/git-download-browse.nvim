@@ -3,9 +3,15 @@
 Work in progress. Browsing works
 
 Browse, clone, fork GitHub repositories from Neovim. The plugin stores clones
-in a configurable directory,
+in a configurable directory, (default: `~/git` )
 offers a shallow clone command, and ships a Telescope
 picker with README previews.
+
+The fork commands will add the fork to the clone folder, but also create
+a branch named "forked" and a worktree folder in the the worktree folder
+(default: `~/forked`). Depends on the `gh` command.
+
+TBD support other git hubs than github
 
 ![screenshot](./assets/screenshot.png)
 
@@ -37,7 +43,8 @@ return {
 }
 ```
 
-For LazyVim, drop the spec into `lua/plugins/git-download-browse.lua` (or any
+For LazyVim, drop the spec into `lua/plugins/git-download-browse.lua`
+(or any
 plugin file under `lua/plugins`). LazyVim will pick it up automatically.
 
 ## Usage
@@ -45,7 +52,8 @@ plugin file under `lua/plugins`). LazyVim will pick it up automatically.
 - `:DownloadGitRepo user/repo` or `:DownloadGitRepo https://github.com/user/repo`
   clones the repository (shallow) into `<repo_root>/user---repo`.
   - If you omit the argument, the command falls back to the clipboard contents
-    (`+` register first, then `*`). When the cursor is on such a string within double quotes. You can paste the string using `yi"`
+    (`+` register first, then `*`). When the cursor is on such a string within double quotes.
+  You can paste the string using `yi"`
 - `:GitRepos` opens the Telescope picker listing downloaded repositories and
   switches Neovim's local directory (`:lcd`) to the selected entry when you
   confirm.

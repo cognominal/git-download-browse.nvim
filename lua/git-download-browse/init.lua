@@ -178,6 +178,10 @@ function M.setup(opts)
   opts = opts or {}
   config = vim.tbl_deep_extend("force", config, opts)
 
+  -- Ensure the configured repository root exists ahead of time so later
+  -- commands can assume it is available.
+  ensure_repo_root()
+
   pcall(vim.api.nvim_del_user_command, "DownloadGitRepo")
   pcall(vim.api.nvim_del_user_command, "GitRepos")
 

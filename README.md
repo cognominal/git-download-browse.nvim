@@ -1,6 +1,7 @@
 # git-download-browse.nvim
 
-Work in progress. Browsing works
+Work in progress. Browsing works but you should have already cloned repos.
+I did it with this [script](https://gist.github.com/cognominal/e81918a1444f1130f4256a7e578f7550)
 
 Browse, clone, fork GitHub repositories from Neovim. The plugin stores clones
 in a configurable directory, (default: `~/git` )

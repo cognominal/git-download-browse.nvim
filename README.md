@@ -6,6 +6,8 @@ Browse and clone GitHub repositories from Neovim. The plugin stores clones in a
 configurable directory, offers a shallow clone command, and ships a Telescope
 picker with README previews.
 
+![screenshot](./assets/screenshot.png)
+
 ## Requirements
 
 - [nvim-lua/plenary.nvim](https://github.com/nvim-lua/plenary.nvim)

@@ -1,9 +1,10 @@
 # git-download-browse.nvim
 
-Not working yet
+Work in progress. Browsing works
 
-Browse and clone GitHub repositories from Neovim. The plugin stores clones in a
-configurable directory, offers a shallow clone command, and ships a Telescope
+Browse, clone, fork GitHub repositories from Neovim. The plugin stores clones
+in a configurable directory,
+offers a shallow clone command, and ships a Telescope
 picker with README previews.
 
 ![screenshot](./assets/screenshot.png)

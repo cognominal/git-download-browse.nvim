@@ -57,6 +57,153 @@ local function ensure_repo_root()
   return root
 end
 
+local function read_json_file(path)
+  local file = Path:new(path)
+  if not file:exists() then
+    return nil, string.format("%s does not exist", path)
+  end
+
+  local ok, contents = pcall(function()
+    return file:read()
+  end)
+  if not ok then
+    return nil, string.format("Failed to read %s: %s", path, contents)
+  end
+
+  if contents == "" then
+    return nil, string.format("%s is empty", path)
+  end
+
+  local ok_decode, decoded = pcall(vim.json.decode or vim.fn.json_decode, contents)
+  if not ok_decode then
+    return nil, string.format("Failed to decode %s: %s", path, decoded)
+  end
+
+  return decoded, nil
+end
+
+local function collect_dependency_names(tbl)
+  local names = {}
+  if type(tbl) ~= "table" then
+    return names
+  end
+
+  for name, _ in pairs(tbl) do
+    table.insert(names, name)
+  end
+
+  table.sort(names)
+  return names
+end
+
+---Extract dependency names from a package.json file.
+---@param package_json_path? string Absolute or relative path. Defaults to cwd/package.json.
+---@return string[] dependencies List of package names.
+---@return string? err Error message if parsing failed.
+function M.package_names_from_package_json(package_json_path)
+  local path = package_json_path or "package.json"
+  local decoded, err = read_json_file(path)
+  if not decoded then
+    return {}, err
+  end
+
+  local names = {}
+  local seen = {}
+  for _, section in ipairs({ decoded.dependencies, decoded.devDependencies }) do
+    for _, name in ipairs(collect_dependency_names(section)) do
+      if not seen[name] then
+        table.insert(names, name)
+        seen[name] = true
+      end
+    end
+  end
+
+  table.sort(names)
+  return names, nil
+end
+
+local function normalize_github_url(url)
+  if type(url) ~= "string" or url == "" then
+    return nil
+  end
+
+  url = url:gsub("^git%+", "")
+
+  if url:match("^git@github.com:") then
+    local without_prefix = url:gsub("^git@github.com:", "")
+    without_prefix = without_prefix:gsub("%.git$", "")
+    return string.format("https://github.com/%s", without_prefix)
+  end
+
+  if url:match("^github:") then
+    local without_prefix = url:gsub("^github:", "")
+    without_prefix = without_prefix:gsub("%.git$", "")
+    return string.format("https://github.com/%s", without_prefix)
+  end
+
+  if url:match("^git://github.com/") then
+    url = url:gsub("^git://", "https://")
+  end
+
+  url = url:gsub("%.git$", "")
+
+  if url:match("^https?://github.com/") then
+    return url
+  end
+
+  return nil
+end
+
+---Resolve a package name to a GitHub repository URL via npm metadata.
+---@param package_name string
+---@return string? url GitHub URL (https) if found.
+---@return string? err Error description when resolution fails.
+function M.package_name_to_github_url(package_name)
+  if type(package_name) ~= "string" or package_name == "" then
+    return nil, "Package name must be a non-empty string"
+  end
+
+  if vim.fn.executable("npm") == 0 then
+    return nil, "npm is not available"
+  end
+
+  local result = vim.fn.system({ "npm", "view", package_name, "repository", "--json" })
+  if vim.v.shell_error ~= 0 then
+    local output = vim.trim(result)
+    if output == "" then
+      output = string.format("npm view %s failed", package_name)
+    end
+    return nil, output
+  end
+
+  local ok, decoded = pcall(vim.json.decode or vim.fn.json_decode, result)
+  local url
+
+  if ok then
+    if type(decoded) == "string" then
+      url = normalize_github_url(decoded)
+    elseif type(decoded) == "table" then
+      if decoded.url then
+        url = normalize_github_url(decoded.url)
+      elseif decoded.path then
+        url = normalize_github_url(decoded.path)
+      end
+
+      if not url and decoded.type == "git" and decoded.directory and decoded.user then
+        url = normalize_github_url(string.format("https://github.com/%s/%s", decoded.user, decoded.directory))
+      end
+    end
+  else
+    url = normalize_github_url(vim.trim(result))
+  end
+
+  if url then
+    return url, nil
+  end
+
+  return nil, string.format("Could not determine GitHub URL for %s", package_name)
+end
+
 function M.download_repo(arg)
   if not arg or arg == "" then
     local clipboard = vim.fn.getreg("+")

@@ -19,13 +19,15 @@ local action_state = require("telescope.actions.state")
 local DEFAULT_CONFIG = {
 	repo_root = vim.fn.expand("~/git"),
 	forked_dir = vim.fn.expand("~/forked"),
-	keymap = "<leader>gv",
+	keymaps = {
+		toggle = "<leader>gv",
+	},
 }
 
 M.defaults = vim.deepcopy(DEFAULT_CONFIG)
 M.options = vim.deepcopy(DEFAULT_CONFIG)
 
-local active_keymap
+local active_keymaps = {}
 
 local language_root_files = {
 	{ label = "js/ts", filename = { "package.json", "tsconfig.json" } },
@@ -427,20 +429,28 @@ function M.open_picker(opts)
 		:find()
 end
 
-local function set_keymap()
-	if active_keymap and (not M.options.keymap or active_keymap ~= M.options.keymap) then
-		pcall(vim.keymap.del, "n", active_keymap)
-		active_keymap = nil
+local function set_keymaps()
+	for _, value in pairs(active_keymaps) do
+		local rhs = value.key
+		if rhs and rhs ~= "" then
+			pcall(vim.keymap.del, value.mode or "n", rhs)
+		end
 	end
+	active_keymaps = {}
 
-	if not M.options.keymap or M.options.keymap == "" then
+	local mappings = M.options.keymaps
+	if type(mappings) ~= "table" then
 		return
 	end
-	vim.keymap.set("n", M.options.keymap, M.open_picker, {
-		desc = "Git download browser",
-		silent = true,
-	})
-	active_keymap = M.options.keymap
+
+	local toggle = mappings.toggle
+	if toggle and toggle ~= "" then
+		vim.keymap.set("n", toggle, M.open_picker, {
+			desc = "Git download browser",
+			silent = true,
+		})
+		active_keymaps.toggle = { key = toggle, mode = "n" }
+	end
 end
 
 function M.setup(opts)
@@ -467,7 +477,7 @@ function M.setup(opts)
 		M.open_picker()
 	end, {})
 
-	set_keymap()
+	set_keymaps()
 end
 
 function M.config(_, opts)

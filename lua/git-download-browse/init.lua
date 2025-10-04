@@ -228,6 +228,124 @@ function M.package_names_from_package_json(package_json_path)
 	return names, nil
 end
 
+local function is_package_json_buffer(bufnr)
+	local name = vim.api.nvim_buf_get_name(bufnr)
+	if name ~= "" then
+		return name:sub(-12) == "package.json"
+	end
+	if vim.fn and vim.fn.expand then
+		return vim.fn.expand("%:t") == "package.json"
+	end
+	return false
+end
+
+local function decode_package_json_buffer(bufnr)
+	local lines = vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
+	if not lines or #lines == 0 then
+		return nil
+	end
+
+	local contents = table.concat(lines, "\n")
+	if contents == "" then
+		return nil
+	end
+
+	local decoder = vim.json and vim.json.decode or vim.fn.json_decode
+	local ok, decoded = pcall(decoder, contents)
+	if not ok or type(decoded) ~= "table" then
+		return nil
+	end
+
+	return decoded
+end
+
+local function dependency_name_under_cursor()
+	local bufnr = vim.api.nvim_get_current_buf()
+	if not is_package_json_buffer(bufnr) then
+		return nil
+	end
+
+	local cursor = vim.api.nvim_win_get_cursor(0)
+	local row = cursor[1]
+	local col = cursor[2]
+	local line = vim.api.nvim_buf_get_lines(bufnr, row - 1, row, false)[1] or ""
+	if line == "" then
+		return nil
+	end
+
+	local matches = {}
+	local search_start = 1
+	while true do
+		local key_start, key_match_end, key = line:find('"([^"]+)"%s*:', search_start)
+		if not key_start then
+			break
+		end
+
+		local entry_end = line:find(",", key_match_end + 1, true)
+		if not entry_end then
+			entry_end = line:find("}", key_match_end + 1, true)
+			if not entry_end then
+				entry_end = line:find("]", key_match_end + 1, true)
+			end
+		end
+		entry_end = entry_end or (#line + 1)
+
+		table.insert(matches, {
+			key = key,
+			key_start = key_start,
+			entry_end = entry_end,
+		})
+
+		search_start = key_match_end + 1
+	end
+
+	if #matches == 0 then
+		return nil
+	end
+
+	local cursor_byte = col + 1
+	local selected
+	local best_distance = math.huge
+
+	for _, match in ipairs(matches) do
+		if cursor_byte >= match.key_start and cursor_byte <= match.entry_end then
+			selected = match.key
+			break
+		end
+
+		local distance
+		if cursor_byte < match.key_start then
+			distance = match.key_start - cursor_byte
+		else
+			distance = cursor_byte - match.entry_end
+		end
+
+		if distance < best_distance then
+			best_distance = distance
+			selected = match.key
+		end
+	end
+
+	if not selected then
+		return nil
+	end
+
+	local decoded = decode_package_json_buffer(bufnr)
+	if not decoded then
+		return nil
+	end
+
+	if type(decoded.dependencies) == "table" and decoded.dependencies[selected] then
+		return selected
+	end
+
+	if type(decoded.devDependencies) == "table" and decoded.devDependencies[selected] then
+		return selected
+	end
+
+	return nil
+end
+
 ---Resolve a package name to a GitHub repository URL via npm metadata.
 ---@param package_name string
 ---@return string? url GitHub URL (https) if found.
@@ -280,16 +398,29 @@ end
 
 function M.clone_repo(arg)
 	if not arg or arg == "" then
-		local clipboard = vim.fn.getreg("+")
-		if clipboard == "" then
-			clipboard = vim.fn.getreg("*")
+		local dependency_name = dependency_name_under_cursor()
+		if dependency_name then
+			vim.notify(string.format("Detected package.json dependency %s", dependency_name), vim.log.levels.INFO)
+			local resolved_url, resolve_err = M.package_name_to_github_url(dependency_name)
+			if not resolved_url then
+				vim.notify(resolve_err or string.format("Could not resolve %s to a GitHub repository", dependency_name), vim.log.levels.ERROR)
+				return
+			end
+			arg = resolved_url
 		end
-		if clipboard and clipboard ~= "" then
-			local trim = vim.trim or vim.fn.trim
-			arg = trim(clipboard)
-		else
-			vim.notify("No repository provided and clipboard is empty", vim.log.levels.ERROR)
-			return
+
+		if not arg or arg == "" then
+			local clipboard = vim.fn.getreg("+")
+			if clipboard == "" then
+				clipboard = vim.fn.getreg("*")
+			end
+			if clipboard and clipboard ~= "" then
+				local trim = vim.trim or vim.fn.trim
+				arg = trim(clipboard)
+			else
+				vim.notify("No repository provided and clipboard is empty", vim.log.levels.ERROR)
+				return
+			end
 		end
 	end
 

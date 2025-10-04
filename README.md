@@ -36,7 +36,7 @@ return {
     },
     config = function()
       require("git-download-browse").setup({
-        repo_root = vim.fn.expand("~/git"),
+        reposDir = vim.fn.expand("~/git"),
         keymaps = {
           browse = "<leader>gv",
           clone = "<leader>gc",
@@ -55,7 +55,7 @@ plugin file under `lua/plugins`). LazyVim will pick it up automatically.
 ## Usage
 
 - `:CloneGitRepo user/repo` or `:CloneGitRepo https://github.com/user/repo`
-  clones the repository (shallow) into `<repo_root>/user---repo`.
+  clones the repository (shallow) into `<reposDir>/user---repo`.
   - If you omit the argument, the command falls back to the clipboard contents
     (`+` register first, then `*`). When the cursor is on such a string within
     double quotes.
@@ -71,7 +71,7 @@ plugin file under `lua/plugins`). LazyVim will pick it up automatically.
   `keymaps.clone` clones a repo (`<leader>gc`), and
   `keymaps.fork` forks the current repo (`<leader>gk`). Set any mapping to
   `false`/`nil` or override them inside `setup()` to rebind.
-- Change `repo_root` in `setup()` to control where repositories are stored. The
+- Change `reposDir` in `setup()` to control where repositories are stored. The
   folder (and missing parents) is created automatically during `setup()`.
 
 The picker previews project READMEs when available; otherwise it shows a

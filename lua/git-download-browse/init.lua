@@ -10,7 +10,7 @@ local Path = require("plenary.path")
 
 
 local DEFAULT_CONFIG = {
-	repo_root = vim.fn.expand("~/git"),
+	reposDir = vim.fn.expand("~/git"),
 	forked_dir = vim.fn.expand("~/forked"),
 	keymaps = {
 		browse = "<leader>gv",
@@ -139,7 +139,7 @@ local function normalize_github_url(url)
 end
 
 local function ensure_repo_root()
-	local root = M.options.repo_root
+	local root = M.options.reposDir
 	if vim.fn.isdirectory(root) == 0 then
 		vim.fn.mkdir(root, "p")
 	end

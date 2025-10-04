@@ -9,7 +9,7 @@ offers a shallow clone command, and ships a Telescope
 picker with README previews.
 
 The fork commands will add the fork to the clone folder, but also create
-a branch named "forked" and a worktree folder in the the worktree folder
+a branch named "forked" and a worktree folder in the worktree folder
 (default: `~/forked`). Depends on the `gh` command.
 
 TBD support other git hubs than github
@@ -37,7 +37,10 @@ return {
     config = function()
       require("git-download-browse").setup({
         repo_root = vim.fn.expand("~/git"),
-        keymap = "<leader>gv",
+        keymaps = {
+          toggle = "<leader>gv",
+          fork = "<leader>gk",
+        },
       })
     end,
   },
@@ -58,10 +61,16 @@ plugin file under `lua/plugins`). LazyVim will pick it up automatically.
 - `:GitRepos` opens the Telescope picker listing downloaded repositories and
   switches Neovim's local directory (`:lcd`) to the selected entry when you
   confirm.
-- The default keymap `<leader>gv` opens the picker. Set `keymap = false` (or
-  `nil`) in `setup()` to disable it.
+- `:GitFork [path|user/repo]` (or the default `<leader>gk`) forks the current
+  repository using GitHub CLI, adds a `fork` remote, and creates a new worktree
+  under `forked_dir`. Branch names start at `forked` and gain numeric suffixes
+  if needed.
+- The default `keymaps.toggle` opens the picker (`<leader>gv`) and
+  `keymaps.fork` forks the current repo (`<leader>gk`). Set either mapping to
+  `false`/`nil` or override them inside `setup()` to rebind.
 - Change `repo_root` in `setup()` to control where repositories are stored. The
   folder (and missing parents) is created automatically during `setup()`.
 
 The picker previews project READMEs when available; otherwise it shows a
-directory listing.
+directory listing. Entries display an initial `F` when a fork remote is
+configured for that repository.

@@ -21,6 +21,7 @@ local DEFAULT_CONFIG = {
 	forked_dir = vim.fn.expand("~/forked"),
 	keymaps = {
 		toggle = "<leader>gv",
+		fork = "<leader>gk",
 	},
 }
 
@@ -111,6 +112,38 @@ local function normalize_repo_arg(arg)
 	return nil, nil, nil
 end
 
+local function normalize_github_url(url)
+	if type(url) ~= "string" or url == "" then
+		return nil
+	end
+
+	url = url:gsub("^git%+", "")
+
+	if url:match("^git@github.com:") then
+		local without_prefix = url:gsub("^git@github.com:", "")
+		without_prefix = without_prefix:gsub("%.git$", "")
+		return string.format("https://github.com/%s", without_prefix)
+	end
+
+	if url:match("^github:") then
+		local without_prefix = url:gsub("^github:", "")
+		without_prefix = without_prefix:gsub("%.git$", "")
+		return string.format("https://github.com/%s", without_prefix)
+	end
+
+	if url:match("^git://github.com/") then
+		url = url:gsub("^git://", "https://")
+	end
+
+	url = url:gsub("%.git$", "")
+
+	if url:match("^https?://github.com/") then
+		return url
+	end
+
+	return nil
+end
+
 local function ensure_repo_root()
 	local root = M.options.repo_root
 	if vim.fn.isdirectory(root) == 0 then
@@ -118,6 +151,16 @@ local function ensure_repo_root()
 	end
 	return root
 end
+
+local fork_module = require("git-download-browse.fork")
+local fork = fork_module.new({
+	get_options = function()
+		return M.options
+	end,
+	ensure_repo_root = ensure_repo_root,
+	normalize_repo_arg = normalize_repo_arg,
+	normalize_github_url = normalize_github_url,
+})
 
 local function read_json_file(path)
 	local file = Path:new(path)
@@ -182,38 +225,6 @@ function M.package_names_from_package_json(package_json_path)
 
 	table.sort(names)
 	return names, nil
-end
-
-local function normalize_github_url(url)
-	if type(url) ~= "string" or url == "" then
-		return nil
-	end
-
-	url = url:gsub("^git%+", "")
-
-	if url:match("^git@github.com:") then
-		local without_prefix = url:gsub("^git@github.com:", "")
-		without_prefix = without_prefix:gsub("%.git$", "")
-		return string.format("https://github.com/%s", without_prefix)
-	end
-
-	if url:match("^github:") then
-		local without_prefix = url:gsub("^github:", "")
-		without_prefix = without_prefix:gsub("%.git$", "")
-		return string.format("https://github.com/%s", without_prefix)
-	end
-
-	if url:match("^git://github.com/") then
-		url = url:gsub("^git://", "https://")
-	end
-
-	url = url:gsub("%.git$", "")
-
-	if url:match("^https?://github.com/") then
-		return url
-	end
-
-	return nil
 end
 
 ---Resolve a package name to a GitHub repository URL via npm metadata.
@@ -305,10 +316,14 @@ function M.download_repo(arg)
 	vim.notify(string.format("Cloning %s...", url), vim.log.levels.INFO)
 	local result = vim.fn.system({ "git", "clone", "--depth=1", url, target })
 	if vim.v.shell_error == 0 then
-		vim.notify(string.format("Cloned into %s", target), vim.log.levels.INFO)
+	vim.notify(string.format("Cloned into %s", target), vim.log.levels.INFO)
 	else
 		vim.notify(result ~= "" and result or "git clone failed", vim.log.levels.ERROR)
 	end
+end
+
+function M.fork_repo(arg)
+	fork.fork_repo(arg)
 end
 
 local function pad_label(label)
@@ -362,12 +377,14 @@ local function collect_repos()
 			local repo_path = Path:new(root, name):absolute()
 			local label = detect_repo_language(repo_path)
 			local depth = repo_clone_depth(repo_path)
-			local display = string.format("%s %s %s", pad_label(label), pad_depth(depth), name)
+			local forked = fork.has_fork(repo_path)
+			local display = string.format("%s %s %s %s", fork.marker(forked), pad_label(label), pad_depth(depth), name)
 			table.insert(entries, {
 				value = name,
 				display = display,
 				ordinal = name,
 				path = repo_path,
+				forked = forked,
 			})
 		end
 	end
@@ -451,6 +468,17 @@ local function set_keymaps()
 		})
 		active_keymaps.toggle = { key = toggle, mode = "n" }
 	end
+
+	local fork = mappings.fork
+	if fork and fork ~= "" then
+		vim.keymap.set("n", fork, function()
+			M.fork_repo()
+		end, {
+			desc = "Fork current repo",
+			silent = true,
+		})
+		active_keymaps.fork = { key = fork, mode = "n" }
+	end
 end
 
 function M.setup(opts)
@@ -463,6 +491,7 @@ function M.setup(opts)
 
 	pcall(vim.api.nvim_del_user_command, "DownloadGitRepo")
 	pcall(vim.api.nvim_del_user_command, "GitRepos")
+	pcall(vim.api.nvim_del_user_command, "GitFork")
 
 	vim.api.nvim_create_user_command("DownloadGitRepo", function(params)
 		M.download_repo(params.args)
@@ -476,6 +505,12 @@ function M.setup(opts)
 	vim.api.nvim_create_user_command("GitRepos", function()
 		M.open_picker()
 	end, {})
+
+	vim.api.nvim_create_user_command("GitFork", function(params)
+		M.fork_repo(params.args)
+	end, {
+		nargs = "?",
+	})
 
 	set_keymaps()
 end

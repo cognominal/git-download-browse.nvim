@@ -38,7 +38,7 @@ return {
       require("git-download-browse").setup({
         repo_root = vim.fn.expand("~/git"),
         keymaps = {
-          toggle = "<leader>gv",
+          browse = "<leader>gv",
           clone = "<leader>gc",
           fork = "<leader>gk",
         },
@@ -67,7 +67,7 @@ plugin file under `lua/plugins`). LazyVim will pick it up automatically.
   repository using GitHub CLI, adds a `fork` remote, and creates a new worktree
   under `forked_dir`. Branch names start at `forked` and gain numeric suffixes
   if needed.
-- The default `keymaps.toggle` opens the picker (`<leader>gv`),
+- The default `keymaps.browse` opens the picker (`<leader>gv`),
   `keymaps.clone` clones a repo (`<leader>gc`), and
   `keymaps.fork` forks the current repo (`<leader>gk`). Set any mapping to
   `false`/`nil` or override them inside `setup()` to rebind.

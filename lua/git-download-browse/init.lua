@@ -20,7 +20,7 @@ local DEFAULT_CONFIG = {
 	repo_root = vim.fn.expand("~/git"),
 	forked_dir = vim.fn.expand("~/forked"),
 	keymaps = {
-		toggle = "<leader>gv",
+		browse = "<leader>gv",
 		clone = "<leader>gc",
 		fork = "<leader>gk",
 	},
@@ -592,13 +592,13 @@ local function set_keymaps()
 		return
 	end
 
-	local toggle = mappings.toggle
-	if toggle and toggle ~= "" then
-		vim.keymap.set("n", toggle, M.open_picker, {
+	local browse = mappings.browse
+	if browse and browse ~= "" then
+		vim.keymap.set("n", browse, M.open_picker, {
 			desc = "Git download browser",
 			silent = true,
 		})
-		active_keymaps.toggle = { key = toggle, mode = "n" }
+		active_keymaps.browse = { key = browse, mode = "n" }
 	end
 
 	local clone = mappings.clone

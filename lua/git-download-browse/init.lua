@@ -239,7 +239,6 @@ function M.setup(opts)
 	-- commands can assume it is available.
 	ensure_repo_root()
 
-	pcall(vim.api.nvim_del_user_command, "DownloadGitRepo")
 	pcall(vim.api.nvim_del_user_command, "CloneGitRepo")
 	pcall(vim.api.nvim_del_user_command, "GitRepos")
 	pcall(vim.api.nvim_del_user_command, "GitFork")

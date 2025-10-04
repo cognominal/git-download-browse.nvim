@@ -1,5 +1,10 @@
 local M = {}
 
+local v = vim.version()
+if v.major ~= 0 or v.minor < 11 then
+  vim.notify("git-download-browse not supported on nvim version < 0.11")
+end
+
 local Path = require("plenary.path")
 local pickers = require("telescope.pickers")
 local finders = require("telescope.finders")
@@ -8,6 +13,8 @@ local conf = require("telescope.config").values
 local utils = require("telescope.utils")
 local actions = require("telescope.actions")
 local action_state = require("telescope.actions.state")
+
+
 
 local config = {
 	repo_root = vim.fn.expand("~/git"),

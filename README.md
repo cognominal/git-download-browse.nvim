@@ -93,3 +93,11 @@ plugin file under `lua/plugins`). LazyVim will pick it up automatically.
 The picker previews project READMEs when available; otherwise it shows a
 directory listing. Entries display an initial `F` when a fork remote is
 configured for that repository.
+
+## Tests
+
+Run the Plenary test suite headlessly:
+
+```sh
+nvim --headless -u tests/minimal_init.lua -c "lua require('tests.run').run()"
+```

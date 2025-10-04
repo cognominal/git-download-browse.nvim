@@ -296,11 +296,16 @@ function Clone.new(deps)
 		end
 
 		vim.notify(string.format("Cloning %s...", url), vim.log.levels.INFO)
-		local result = vim.fn.system({ "git", "clone", "--depth=1", url, target })
-		if vim.v.shell_error == 0 then
+		local job = vim.system({ "git", "clone", "--depth=1", url, target }, { text = true })
+		local result = job:wait()
+		if result.code == 0 then
 			vim.notify(string.format("Cloned into %s", target), vim.log.levels.INFO)
 		else
-			vim.notify(result ~= "" and result or "git clone failed", vim.log.levels.ERROR)
+			local message = vim.trim(result.stderr or result.stdout or "")
+			if message == "" then
+				message = "git clone failed"
+			end
+			vim.notify(message, vim.log.levels.ERROR)
 		end
 	end
 

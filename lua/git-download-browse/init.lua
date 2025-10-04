@@ -16,11 +16,16 @@ local action_state = require("telescope.actions.state")
 
 
 
-local config = {
+local DEFAULT_CONFIG = {
 	repo_root = vim.fn.expand("~/git"),
 	forked_dir = vim.fn.expand("~/forked"),
 	keymap = "<leader>gv",
 }
+
+M.defaults = vim.deepcopy(DEFAULT_CONFIG)
+M.options = vim.deepcopy(DEFAULT_CONFIG)
+
+local active_keymap
 
 local language_root_files = {
 	{ label = "js/ts", filename = { "package.json", "tsconfig.json" } },
@@ -87,7 +92,7 @@ local function normalize_repo_arg(arg)
 end
 
 local function ensure_repo_root()
-	local root = config.repo_root
+	local root = M.options.repo_root
 	if vim.fn.isdirectory(root) == 0 then
 		vim.fn.mkdir(root, "p")
 	end
@@ -405,18 +410,24 @@ function M.open_picker(opts)
 end
 
 local function set_keymap()
-	if not config.keymap or config.keymap == "" then
+	if active_keymap and (not M.options.keymap or active_keymap ~= M.options.keymap) then
+		pcall(vim.keymap.del, "n", active_keymap)
+		active_keymap = nil
+	end
+
+	if not M.options.keymap or M.options.keymap == "" then
 		return
 	end
-	vim.keymap.set("n", config.keymap, M.open_picker, {
+	vim.keymap.set("n", M.options.keymap, M.open_picker, {
 		desc = "Git download browser",
 		silent = true,
 	})
+	active_keymap = M.options.keymap
 end
 
 function M.setup(opts)
 	opts = opts or {}
-	config = vim.tbl_deep_extend("force", config, opts)
+	M.options = vim.tbl_deep_extend("force", vim.deepcopy(DEFAULT_CONFIG), opts)
 
 	-- Ensure the configured repository root exists ahead of time so later
 	-- commands can assume it is available.
@@ -441,6 +452,8 @@ function M.setup(opts)
 	set_keymap()
 end
 
-M.setup()
+function M.config(_, opts)
+	M.setup(opts)
+end
 
 return M

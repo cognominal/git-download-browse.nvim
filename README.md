@@ -29,7 +29,7 @@ Add the plugin to your LazyVim spec so dependencies load automatically.
 ```lua
 return {
   {
-    "cog/git-download-browse.nvim",
+    "cognominal/git-download-browse.nvim",
     dependencies = {
       "nvim-lua/plenary.nvim",
       "nvim-telescope/telescope.nvim",

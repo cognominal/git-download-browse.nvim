@@ -21,6 +21,7 @@ local DEFAULT_CONFIG = {
 	forked_dir = vim.fn.expand("~/forked"),
 	keymaps = {
 		toggle = "<leader>gv",
+		clone = "<leader>gc",
 		fork = "<leader>gk",
 	},
 }
@@ -277,7 +278,7 @@ function M.package_name_to_github_url(package_name)
 	return nil, string.format("Could not determine GitHub URL for %s", package_name)
 end
 
-function M.download_repo(arg)
+function M.clone_repo(arg)
 	if not arg or arg == "" then
 		local clipboard = vim.fn.getreg("+")
 		if clipboard == "" then
@@ -469,6 +470,17 @@ local function set_keymaps()
 		active_keymaps.toggle = { key = toggle, mode = "n" }
 	end
 
+	local clone = mappings.clone
+	if clone and clone ~= "" then
+		vim.keymap.set("n", clone, function()
+			M.clone_repo()
+		end, {
+			desc = "Clone GitHub repo",
+			silent = true,
+		})
+		active_keymaps.clone = { key = clone, mode = "n" }
+	end
+
 	local fork = mappings.fork
 	if fork and fork ~= "" then
 		vim.keymap.set("n", fork, function()
@@ -490,11 +502,12 @@ function M.setup(opts)
 	ensure_repo_root()
 
 	pcall(vim.api.nvim_del_user_command, "DownloadGitRepo")
+	pcall(vim.api.nvim_del_user_command, "CloneGitRepo")
 	pcall(vim.api.nvim_del_user_command, "GitRepos")
 	pcall(vim.api.nvim_del_user_command, "GitFork")
 
-	vim.api.nvim_create_user_command("DownloadGitRepo", function(params)
-		M.download_repo(params.args)
+	vim.api.nvim_create_user_command("CloneGitRepo", function(params)
+		M.clone_repo(params.args)
 	end, {
 		nargs = "?",
 		complete = function()

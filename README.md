@@ -39,6 +39,7 @@ return {
         repo_root = vim.fn.expand("~/git"),
         keymaps = {
           toggle = "<leader>gv",
+          clone = "<leader>gc",
           fork = "<leader>gk",
         },
       })
@@ -53,11 +54,12 @@ plugin file under `lua/plugins`). LazyVim will pick it up automatically.
 
 ## Usage
 
-- `:DownloadGitRepo user/repo` or `:DownloadGitRepo https://github.com/user/repo`
+- `:CloneGitRepo user/repo` or `:CloneGitRepo https://github.com/user/repo`
   clones the repository (shallow) into `<repo_root>/user---repo`.
   - If you omit the argument, the command falls back to the clipboard contents
-    (`+` register first, then `*`). When the cursor is on such a string within double quotes.
-  You can paste the string using `yi"`
+    (`+` register first, then `*`). When the cursor is on such a string within
+    double quotes.
+   You can paste the string using `yi"`
 - `:GitRepos` opens the Telescope picker listing downloaded repositories and
   switches Neovim's local directory (`:lcd`) to the selected entry when you
   confirm.
@@ -65,8 +67,9 @@ plugin file under `lua/plugins`). LazyVim will pick it up automatically.
   repository using GitHub CLI, adds a `fork` remote, and creates a new worktree
   under `forked_dir`. Branch names start at `forked` and gain numeric suffixes
   if needed.
-- The default `keymaps.toggle` opens the picker (`<leader>gv`) and
-  `keymaps.fork` forks the current repo (`<leader>gk`). Set either mapping to
+- The default `keymaps.toggle` opens the picker (`<leader>gv`),
+  `keymaps.clone` clones a repo (`<leader>gc`), and
+  `keymaps.fork` forks the current repo (`<leader>gk`). Set any mapping to
   `false`/`nil` or override them inside `setup()` to rebind.
 - Change `repo_root` in `setup()` to control where repositories are stored. The
   folder (and missing parents) is created automatically during `setup()`.

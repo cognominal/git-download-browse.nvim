@@ -29,13 +29,32 @@ local active_keymap
 
 local language_root_files = {
 	{ label = "js/ts", filename = { "package.json", "tsconfig.json" } },
+	{ label = "python", filename = { "pyproject.toml", "requirements.txt", "setup.cfg" } },
 	{ label = "ruby", filename = "Gemfile" },
 	{ label = "rust", filename = "Cargo.toml" },
 	{ label = "lua", filename = { "init.lua", "lua" } },
+	{ label = "elixir", filename = "mix.exs" },
+	{ label = "php", filename = "composer.json" },
+	{ label = "java", filename = { "pom.xml", "build.gradle", "build.gradle.kts" } },
+	{ label = "csharp", filename = { "*.csproj", "*.sln" } },
+	{ label = "haskell", filename = { "package.yaml", "cabal.project" } },
+	{ label = "cpp", filename = { "CMakeLists.txt", "Makefile" } },
 	{ label = "perl", filename = "Makefile.PL" },
 	{ label = "raku", filename = "META6.json" },
 	{ label = "go", filename = { "go.mod", "Taskfile.yaml" } },
 }
+
+local function candidate_exists(repo_path, candidate_name)
+	local candidate = Path:new(repo_path, candidate_name)
+	local candidate_path = candidate:absolute()
+
+	if candidate_name:find("[%*%?%[]") then
+		local matches = vim.fn.glob(candidate_path)
+		return type(matches) == "string" and matches ~= ""
+	end
+
+	return candidate:exists()
+end
 
 local function detect_repo_language(repo_path)
 	for _, item in ipairs(language_root_files) do
@@ -46,8 +65,7 @@ local function detect_repo_language(repo_path)
 
 		if type(filenames) == "table" then
 			for _, candidate_name in ipairs(filenames) do
-				local candidate = Path:new(repo_path, candidate_name)
-				if candidate:exists() then
+				if candidate_exists(repo_path, candidate_name) then
 					return item.label
 				end
 			end

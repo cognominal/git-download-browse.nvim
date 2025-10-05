@@ -1,20 +1,24 @@
 # git-download-browse.nvim
 
-Dealing with gitHub repositories from Neovim. 
+Dealing with gitHub repositories from Neovim.
 
-Clone; browse; fork in a [worktree] 
+Clone; browse; fork in a [worktree]
+
+- `<leader>gc`  clone a repo
+- `<leader>gv`  view the repos in telescope
+- `<leader>gk` fork, branch and create a work tree 
 
 The **clone dir** is a folder of your choice, (default: `~/git` )
-Same for **fork** dir, (default `~/fork`) 
+Same for **fork** dir, (default `~/fork`)
 Browsing  the clone dir  is done with Telescope
 The previewer shows the  README.md of the current repo (in telescope).
 The picker opens it.
 
+## clone
+
 The fork commands will add the fork to the clone dir, but also create
 a branch named "forked" and a worktree folder in the worktree folder
 (default: `~/forked`). Depends on the `gh` command.
-
-
 
 Work in progress. Browsing works but you should have already cloned repos.
 I did it with this [script](https://gist.github.com/cognominal/e81918a1444f1130f4256a7e578f7550)
